@@ -15,6 +15,11 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [newBlockedDate, setNewBlockedDate] = useState('');
 
+  // Email Modal States
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [selectedBookingForEmail, setSelectedBookingForEmail] = useState<{ id: string, name: string, email: string, checkIn: string, checkOut: string, status: string } | null>(null);
+  const [customEmailMessage, setCustomEmailMessage] = useState('');
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -63,20 +68,38 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleBookingAction = async (id: string, status: string) => {
-    if (!confirm(`¿Seguro que quieres cambiar el estado a ${status}?`)) return;
+  const openBookingActionModal = (booking: any, newStatus: string) => {
+    setSelectedBookingForEmail({ ...booking, status: newStatus });
 
+    // Pre-fill email template
+    const actionText = newStatus === 'ACCEPTED' ? 'aceptada' : 'denegada';
+    setCustomEmailMessage(`Estimado ${booking.name},\n\nSu reserva para los días ${booking.checkIn} al ${booking.checkOut} ha sido ${actionText}.\n\nUn saludo,\nVilla Golondrinas.`);
+
+    setEmailModalOpen(true);
+  };
+
+  const confirmBookingAction = async () => {
+    if (!selectedBookingForEmail) return;
+    setSaving(true);
     try {
-      const res = await fetch(`/api/bookings/${id}`, {
+      const res = await fetch(`/api/bookings/${selectedBookingForEmail.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({
+          status: selectedBookingForEmail.status,
+          customEmailMessage: customEmailMessage
+        })
       });
       if (res.ok) {
         fetchData(); // Refresh list
+        setEmailModalOpen(false);
+      } else {
+        alert('Error al actualizar reserva o enviar correo');
       }
     } catch (e) {
-      alert('Error al actualizar reserva');
+      alert('Error de red al procesar la reserva');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -179,52 +202,97 @@ export default function AdminDashboard() {
         {/* TAB: CONTENT */}
         {activeTab === 'content' && (
           <div className="animate-fade-in space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 border-b pb-4">Gestión de Textos</h2>
-            <form onSubmit={handleSaveContent} className="space-y-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              {/* Hero Section */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4 bg-gray-50 p-3 rounded border">Sección Principal (Hero)</h3>
-                <div className="space-y-4 px-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pequeño titular (Tagline)</label>
-                    <input type="text" className="w-full border p-2 rounded" value={content.heroTagline} onChange={e => setContent({ ...content, heroTagline: e.target.value })} />
+            <div className="flex justify-between items-center border-b pb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Editor Visual (Inicio)</h2>
+              <button onClick={handleSaveContent} disabled={saving} className="bg-[#2c3e50] text-white px-6 py-2 rounded-md hover:bg-gray-800 transition flex items-center gap-2">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Guardar Cambios
+              </button>
+            </div>
+
+            <div className="bg-white border rounded-lg overflow-hidden shadow-xl relative">
+              <div className="absolute top-0 right-0 bg-[#d4af37] text-white text-xs px-3 py-1 font-semibold rounded-bl-lg z-50">MODO EDICIÓN VISUAL</div>
+
+              {/* WYSIWYG PREVIEW */}
+              <div className="home-page preview-mode">
+                <style dangerouslySetInnerHTML={{
+                  __html: `
+                  .preview-mode input, .preview-mode textarea {
+                    background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.5); 
+                    transition: all 0.2s; border-radius: 4px; padding: 4px;
+                  }
+                  .preview-mode input:hover, .preview-mode textarea:hover,
+                  .preview-mode input:focus, .preview-mode textarea:focus {
+                    background: rgba(255,255,255,0.9); border: 1px solid #d4af37; color: #2c3e50; outline: none;
+                  }
+                  .preview-mode .dark-text-input {
+                     background: rgba(0,0,0,0.02); border: 1px dashed #ccc; color: #2c3e50;
+                  }
+                  .preview-mode .dark-text-input:focus, .preview-mode .dark-text-input:hover {
+                     background: white; border: 1px solid #d4af37;
+                  }
+                `}} />
+
+                {/* Hero Preview */}
+                <div className="relative h-[500px] flex items-center justify-center overflow-hidden">
+                  <div className="absolute inset-0 z-0 bg-gray-900">
+                    <img src={content.heroImage} alt="Hero" className="w-full h-full object-cover opacity-60" onError={(e) => (e.currentTarget.style.display = 'none')} />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Título Principal (Soporta HTML)</label>
-                    <input type="text" className="w-full border p-2 rounded font-mono text-sm" value={content.heroTitle} onChange={e => setContent({ ...content, heroTitle: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción corta</label>
-                    <textarea className="w-full border p-2 rounded" rows={3} value={content.heroDescription} onChange={e => setContent({ ...content, heroDescription: e.target.value })} />
+                  <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto flex flex-col items-center">
+                    <input
+                      className="text-[#d4af37] tracking-[0.2em] text-sm md:text-base uppercase font-semibold text-center w-full mb-4"
+                      value={content.heroTagline}
+                      onChange={e => setContent({ ...content, heroTagline: e.target.value })}
+                    />
+                    <input
+                      className="text-4xl md:text-5xl lg:text-6xl text-white font-bold mb-6 text-center w-full heading-font"
+                      value={content.heroTitle}
+                      onChange={e => setContent({ ...content, heroTitle: e.target.value })}
+                    />
+                    <textarea
+                      className="text-lg md:text-xl text-white mb-10 w-full text-center font-light resize-none leading-relaxed"
+                      rows={3}
+                      value={content.heroDescription}
+                      onChange={e => setContent({ ...content, heroDescription: e.target.value })}
+                    />
                   </div>
                 </div>
+
+                {/* About Preview */}
+                <section className="py-16 bg-white">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                      <div className="relative group cursor-pointer" onClick={() => setActiveTab('images')}>
+                        <img src={content.aboutImage} alt="About" className="rounded-lg shadow-xl z-10 relative object-cover h-[400px] w-full opacity-80" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none group-hover:bg-black/40 transition">
+                          <span className="bg-[#2c3e50] text-white px-4 py-2 rounded text-sm shadow-lg border border-white/20">Modificar Imagen Exclusivamente en Galería</span>
+                        </div>
+                      </div>
+                      <div className="px-4 flex flex-col">
+                        <span className="text-[#d4af37] tracking-widest text-sm uppercase font-semibold mb-2 block">CASA VILLA GOLONDRINAS</span>
+                        <input
+                          className="dark-text-input text-3xl md:text-4xl text-[#2c3e50] mb-4 heading-font w-full font-medium"
+                          value={content.aboutTitle}
+                          onChange={e => setContent({ ...content, aboutTitle: e.target.value })}
+                        />
+                        <textarea
+                          className="dark-text-input text-gray-600 mb-4 text-base font-light resize-none w-full leading-relaxed"
+                          rows={4}
+                          value={content.aboutIntro}
+                          onChange={e => setContent({ ...content, aboutIntro: e.target.value })}
+                        />
+                        <textarea
+                          className="dark-text-input text-gray-600 text-base font-light resize-none w-full leading-relaxed"
+                          rows={4}
+                          value={content.aboutDetails}
+                          onChange={e => setContent({ ...content, aboutDetails: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
               </div>
 
-              {/* About Section */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4 bg-gray-50 p-3 rounded border">Sección "Nuestra Casa" (About)</h3>
-                <div className="space-y-4 px-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Título de la sección</label>
-                    <input type="text" className="w-full border p-2 rounded" value={content.aboutTitle} onChange={e => setContent({ ...content, aboutTitle: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Introducción</label>
-                    <textarea className="w-full border p-2 rounded" rows={3} value={content.aboutIntro} onChange={e => setContent({ ...content, aboutIntro: e.target.value })} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Detalles extendidos</label>
-                    <textarea className="w-full border p-2 rounded" rows={3} value={content.aboutDetails} onChange={e => setContent({ ...content, aboutDetails: e.target.value })} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4 border-t">
-                <button type="submit" disabled={saving} className="bg-[#2c3e50] text-white px-6 py-2 rounded-md hover:bg-gray-800 transition flex items-center gap-2">
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Guardar Textos
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         )}
 
@@ -359,8 +427,8 @@ export default function AdminDashboard() {
                         <td className="p-4 text-right">
                           {b.status === 'PENDING' ? (
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => handleBookingAction(b.id, 'ACCEPTED')} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Aceptar"><Check className="w-4 h-4" /></button>
-                              <button onClick={() => handleBookingAction(b.id, 'CANCELLED')} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Rechazar"><X className="w-4 h-4" /></button>
+                              <button onClick={() => openBookingActionModal(b, 'ACCEPTED')} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Aceptar"><Check className="w-4 h-4" /></button>
+                              <button onClick={() => openBookingActionModal(b, 'CANCELLED')} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Rechazar"><X className="w-4 h-4" /></button>
                             </div>
                           ) : (
                             <button onClick={() => handleDeleteBooking(b.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
@@ -383,6 +451,46 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* Email Response Modal */}
+      {emailModalOpen && selectedBookingForEmail && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden animate-fade-in">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-semibold text-gray-900">
+                Confirmar y Notificar: {selectedBookingForEmail.status === 'ACCEPTED' ? 'Aceptar Reserva' : 'Rechazar Reserva'}
+              </h3>
+              <button onClick={() => setEmailModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Se enviará el siguiente correo electrónico a <strong>{selectedBookingForEmail.email}</strong>. Puedes editar el texto antes de enviarlo:
+              </p>
+              <textarea
+                className="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-[#2c3e50] focus:border-[#2c3e50] outline-none min-h-[200px]"
+                value={customEmailMessage}
+                onChange={(e) => setCustomEmailMessage(e.target.value)}
+              />
+            </div>
+            <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+              <button
+                onClick={() => setEmailModalOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmBookingAction}
+                disabled={saving}
+                className="px-4 py-2 bg-[#2c3e50] text-white rounded-md hover:bg-gray-800 transition flex items-center gap-2 text-sm"
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                Confirmar y Enviar Correo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
