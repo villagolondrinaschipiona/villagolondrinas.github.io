@@ -1,0 +1,56 @@
+{
+  "content": {
+    "heroTagline": "Escapada Exclusiva",
+    "heroTitle": "Donde el Lujo <br /> <span class=\"text-gradient font-style-italic\">Encuentra la Paz</span>",
+    "heroDescription": "Desconecta del mundo en nuestra villa privada. Espacios diseñados meticulosamente para una experiencia inolvidable, en plena naturaleza, cerca del mar.",
+    "heroImage": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Aparcamiento.jpeg",
+    "aboutTitle": "Un Refugio Diseñado para los Sentidos",
+    "aboutIntro": "Villa Golondrinas no es solo un lugar para alojarse, es una experiencia completa. Con acabados de primera calidad, luz natural abundante y distribución diáfana, cada rincón está pensado para tu confort.",
+    "aboutDetails": "Despierta con el sonido de la brisa, disfruta de desayunos en la terraza cubierta, aprovecha la maravillosa zona de barbacoa a tu disposición y relájate al atardecer en un chillout de ensueño junto a la piscina. Tu oasis personal te espera.",
+    "aboutImage": "https://images.unsplash.com/photo-1600607688969-a5bfcd64bd40?q=80&w=1400&auto=format&fit=crop",
+    "galleryImages": [
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Piscina%203.avif",
+        "title": "Vista Exterior"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Salon.avif",
+        "title": "Salón Principal"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Piscina%201.avif",
+        "title": "Piscina con Chillout"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Cocina%20completa%201.avif",
+        "title": "Cocina Completa"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Dormitorio%201.avif",
+        "title": "Dormitorio Principal"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Ba%C3%B1o%20completo%201.avif",
+        "title": "Baño Completo"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Exterior%206.avif",
+        "title": "Terraza al Atardecer"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Exterior%202.avif",
+        "title": "Zona de Hamacas y Relax"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Patio%207.avif",
+        "title": "Barbacoas inolvidables al aire libre"
+      },
+      {
+        "url": "https://zthlqsytenutqo8m.public.blob.vercel-storage.com/Patio%204.avif",
+        "title": "Un lugar donde comer con amigos"
+      }
+    ],
+    "blockedDates": []
+  },
+  "bookings": []
+}

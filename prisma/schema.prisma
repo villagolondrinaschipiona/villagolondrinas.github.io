@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  guests    Int
+  message   String?
+  checkIn   String   // Storing as YYYY-MM-DD string for simplicity matching existing logic
+  checkOut  String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, CANCELLED
+  createdAt DateTime @default(now())
+}
+
+model SiteContent {
+  id              String   @id @default("main") // Singleton record
+  heroTitle       String   @default("Villa Serenity")
+  heroTagline     String   @default("Escapada Exclusiva")
+  heroDescription String   @default("Donde el lujo encuentra la paz")
+  heroImage       String   @default("https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80")
+  aboutTitle      String   @default("Nuestra Casa")
+  aboutIntro      String   @default("Un refugio premium...")
+  aboutDetails    String   @default("Detalles extendidos...")
+  aboutImage      String   @default("https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80")
+  
+  // JSON fields for arrays
+  galleryImages   Json     @default("[]") // Array of { url: string, title: string }
+  blockedDates    Json     @default("[]") // Array of string dates (YYYY-MM-DD)
+  
+  updatedAt       DateTime @updatedAt
+}
