@@ -20,33 +20,39 @@ export default function AdminDashboard() {
   const [selectedBookingForEmail, setSelectedBookingForEmail] = useState<{ id: string, name: string, email: string, checkIn: string, checkOut: string, status: string } | null>(null);
   const [customEmailMessage, setCustomEmailMessage] = useState('');
 
+  const [isDragging, setIsDragging] = useState(false);
+
   useEffect(() => {
-    fetchData();
+    fetchContent();
+    fetchBookings();
   }, []);
 
-  const fetchData = async () => {
+  const fetchContent = async () => {
     setLoading(true);
     try {
-      const [contentRes, bookingsRes] = await Promise.all([
-        fetch('/api/content'),
-        fetch('/api/bookings')
-      ]);
-
+      const contentRes = await fetch('/api/content');
       setContent(await contentRes.json());
+    } catch (e) {
+      console.error("Failed to load content data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const bookingsRes = await fetch('/api/bookings');
       setBookings(await bookingsRes.json());
     } catch (e) {
-      console.error("Failed to load admin data");
+      console.error("Failed to load bookings data");
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'logout' })
-    });
+    await fetch('/api/auth', { method: 'DELETE' });
     router.push('/admin/login');
     router.refresh();
   };
@@ -91,7 +97,7 @@ export default function AdminDashboard() {
         })
       });
       if (res.ok) {
-        fetchData(); // Refresh list
+        fetchBookings(); // Refresh list
         setEmailModalOpen(false);
       } else {
         alert('Error al actualizar reserva o enviar correo');
@@ -107,7 +113,7 @@ export default function AdminDashboard() {
     if (!confirm('¿Eliminar permanentemente este registro?')) return;
     try {
       const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchData();
+      if (res.ok) fetchBookings();
     } catch (e) {
       alert('Error al eliminar');
     }
@@ -127,8 +133,92 @@ export default function AdminDashboard() {
   const removeBlockedDate = (date: string) => {
     setContent({
       ...content,
-      blockedDates: content.blockedDates.filter((d: string) => d !== date)
+      blockedDates: (content.blockedDates || []).filter((d: string) => d !== date)
     });
+  };
+
+  // --- Image Processing & Upload Logic ---
+  const processImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height *= maxDim / width;
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width *= maxDim / height;
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.8)); // Compress gently
+          } else {
+            reject('Could not get canvas context');
+          }
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleFiles = async (files: FileList) => {
+    setSaving(true);
+    const newImages: { url: string, title: string }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith('image/')) continue;
+      try {
+        const base64Url = await processImage(file);
+        newImages.push({ url: base64Url, title: file.name.split('.')[0] });
+      } catch (error) {
+        console.error("Error processing image", file.name, error);
+      }
+    }
+    if (newImages.length > 0) {
+      setContent((prev: any) => ({
+        ...prev,
+        galleryImages: [...(prev.galleryImages || []), ...newImages]
+      }));
+    }
+    setSaving(false);
   };
 
   const addGalleryImage = () => {
@@ -234,8 +324,21 @@ export default function AdminDashboard() {
 
                 {/* Hero Preview */}
                 <div className="relative h-[500px] flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 z-0 bg-gray-900">
+                  <div className="absolute inset-0 z-0 bg-gray-900 group">
                     <img src={content.heroImage} alt="Hero" className="w-full h-full object-cover opacity-60" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    <div className="absolute top-4 left-4 z-50 bg-black/70 p-2 rounded shadow flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
+                      <span className="text-white text-xs font-semibold">Fondo Portada:</span>
+                      <select
+                        className="bg-white text-sm text-gray-900 rounded px-2 py-1 outline-none"
+                        value={content.heroImage}
+                        onChange={(e) => setContent({ ...content, heroImage: e.target.value })}
+                      >
+                        <option value={content.heroImage}>Actual (URL personalizada)</option>
+                        {(content.galleryImages || []).map((img: any, i: number) => (
+                          <option key={i} value={img.url}>{img.title || `Imagen Galería ${i + 1}`}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   <div className="relative z-10 text-center px-4 w-full max-w-4xl mx-auto flex flex-col items-center">
                     <input
@@ -290,25 +393,38 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </section>
-                {/* Features Section (Static Preview) */}
+                {/* Features Section */}
                 <section className="py-24 bg-[#f9f9f9]">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative pointer-events-none">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
                     <span className="text-[#d4af37] tracking-widest text-sm uppercase font-semibold">Servicios Excepcionales</span>
-                    <h2 className="text-4xl text-[#2c3e50] mt-4 mb-16 heading-font font-medium">Comodidades Destacadas (Textos Fijos)</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left opacity-70">
-                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100"><h3 className="text-xl font-semibold mb-3">Conectividad Total</h3><p className="text-gray-600 font-light">Fibra óptica de alta velocidad 1Gbps...</p></div>
-                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100"><h3 className="text-xl font-semibold mb-3">Cocina Gourmet</h3><p className="text-gray-600 font-light">Totalmente equipada con electrodomésticos...</p></div>
-                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100"><h3 className="text-xl font-semibold mb-3">Aparcamiento</h3><p className="text-gray-600 font-light">Garaje privado para dos vehículos...</p></div>
+                    <input
+                      className="dark-text-input text-4xl text-[#2c3e50] mt-4 mb-16 heading-font font-medium text-center w-full"
+                      value={content.featuresTitle} onChange={e => setContent({ ...content, featuresTitle: e.target.value })}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+                        <input className="dark-text-input text-xl font-semibold mb-3 w-full" value={content.feature1Title} onChange={e => setContent({ ...content, feature1Title: e.target.value })} />
+                        <textarea className="dark-text-input text-gray-600 font-light w-full resize-none" rows={4} value={content.feature1Desc} onChange={e => setContent({ ...content, feature1Desc: e.target.value })} />
+                      </div>
+                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+                        <input className="dark-text-input text-xl font-semibold mb-3 w-full" value={content.feature2Title} onChange={e => setContent({ ...content, feature2Title: e.target.value })} />
+                        <textarea className="dark-text-input text-gray-600 font-light w-full resize-none" rows={4} value={content.feature2Desc} onChange={e => setContent({ ...content, feature2Desc: e.target.value })} />
+                      </div>
+                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+                        <input className="dark-text-input text-xl font-semibold mb-3 w-full" value={content.feature3Title} onChange={e => setContent({ ...content, feature3Title: e.target.value })} />
+                        <textarea className="dark-text-input text-gray-600 font-light w-full resize-none" rows={4} value={content.feature3Desc} onChange={e => setContent({ ...content, feature3Desc: e.target.value })} />
+                      </div>
                     </div>
                   </div>
                 </section>
 
-                {/* CTA Section (Static Preview) */}
-                <section className="py-20 bg-[#2c3e50] relative overflow-hidden pointer-events-none">
+                {/* CTA Section */}
+                <section className="py-20 bg-[#2c3e50] relative overflow-hidden">
                   <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                  <div className="max-w-4xl mx-auto px-4 relative z-10 text-center text-white">
-                    <h2 className="text-4xl md:text-5xl font-medium heading-font mb-6">Reserva tu estancia de ensueño hoy mismo</h2>
-                    <div className="inline-block bg-[#d4af37] text-white px-10 py-4 rounded-sm text-sm uppercase font-bold shadow-2xl">Consultar el Calendario</div>
+                  <div className="max-w-4xl mx-auto px-4 relative z-10 text-center text-white flex flex-col items-center">
+                    <input className="text-4xl md:text-5xl font-medium heading-font mb-6 text-center w-full" value={content.ctaTitle} onChange={e => setContent({ ...content, ctaTitle: e.target.value })} />
+                    <textarea className="text-xl text-white font-light mb-10 text-center w-full resize-none" rows={2} value={content.ctaDesc} onChange={e => setContent({ ...content, ctaDesc: e.target.value })} />
+                    <input className="inline-block bg-[#d4af37]/20 border border-[#d4af37] text-white px-10 py-4 rounded-sm text-sm uppercase font-bold text-center w-64" value={content.ctaButton} onChange={e => setContent({ ...content, ctaButton: e.target.value })} />
                   </div>
                 </section>
 
@@ -316,9 +432,9 @@ export default function AdminDashboard() {
                 <footer className="bg-white pt-16 pb-8 border-t border-gray-100">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-                      <div className="opacity-70 pointer-events-none">
+                      <div className="flex flex-col">
                         <span className="heading-font text-2xl font-semibold tracking-wider text-[#2c3e50]">VILLA GOLONDRINAS</span>
-                        <p className="mt-4 text-gray-500 font-light leading-relaxed max-w-xs">Tu destino premium para vacaciones inolvidables.</p>
+                        <textarea className="dark-text-input mt-4 text-gray-500 font-light leading-relaxed max-w-xs resize-none" rows={3} value={content.footerIntro} onChange={e => setContent({ ...content, footerIntro: e.target.value })} />
                       </div>
                       <div className="opacity-70 pointer-events-none">
                         <h4 className="font-semibold text-gray-900 mb-4 uppercase text-sm">Enlaces Rápidos</h4>
@@ -375,8 +491,36 @@ export default function AdminDashboard() {
               <div className="pt-6 border-t">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900">Fotos de la Galería</h3>
-                  <button type="button" onClick={addGalleryImage} className="text-sm bg-gray-100 px-3 py-1.5 rounded hover:bg-gray-200 transition text-gray-800">
-                    + Añadir Foto
+                </div>
+
+                {/* Drag and Drop Upload Zone */}
+                <div
+                  className={`border-2 border-dashed rounded-lg p-10 text-center mb-6 transition-colors duration-200 cursor-pointer ${isDragging ? 'border-[#d4af37] bg-[#d4af37]/5' : 'border-gray-300 hover:border-[#d4af37] hover:bg-gray-50'}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById('gallery-upload')?.click()}
+                >
+                  <input
+                    type="file"
+                    id="gallery-upload"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                  />
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <p className="text-gray-600 font-medium">Arrastra y suelta fotos aquí para subirlas</p>
+                    <p className="text-sm text-gray-500">o haz clic para explorar tus archivos</p>
+                    <p className="text-xs text-[#2c3e50] font-semibold bg-[#d4af37]/20 px-3 py-1 rounded inline-block mt-2">Redimensionado y compresión automática online</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center mb-4 border-t pt-4">
+                  <h4 className="text-sm font-medium text-gray-600">Imágenes Subidas ({content.galleryImages?.length || 0})</h4>
+                  <button type="button" onClick={addGalleryImage} className="text-xs bg-gray-100 px-3 py-1.5 rounded hover:bg-gray-200 transition text-gray-800">
+                    + Añadir desde URL de internet
                   </button>
                 </div>
 

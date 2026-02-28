@@ -12,6 +12,9 @@ export default async function Home() {
   }) || {
     heroTagline: '', heroTitle: '', heroDescription: '', heroImage: '',
     aboutTitle: '', aboutIntro: '', aboutDetails: '', aboutImage: '',
+    featuresTitle: 'Comodidades Destacadas', feature1Title: 'Conectividad Total', feature1Desc: 'Fibra óptica de alta velocidad para que siempre estés conectado, ideal para teletrabajo o entretenimiento.',
+    feature2Title: 'Cocina Gourmet', feature2Desc: 'Cocina totalmente equipada con electrodomésticos de última generación y utensilios de alta calidad para tus creaciones culinarias.', feature3Title: 'Aparcamiento', feature3Desc: 'Garaje privado con capacidad para varios vehículos, ofreciendo seguridad y comodidad durante toda tu estancia.',
+    ctaTitle: 'Reserva tu estancia de ensueño hoy mismo', ctaDesc: 'Las fechas se llenan rápidamente, asegura tu lugar en el paraíso. ¡No te quedes sin tu experiencia inolvidable!', ctaButton: 'Consultar el Calendario',
     galleryImages: [], blockedDates: []
   };
 
@@ -130,16 +133,16 @@ export default async function Home() {
       <section className="py-24 bg-[#f9f9f9]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="text-[#d4af37] tracking-widest text-sm uppercase font-semibold">Servicios Excepcionales</span>
-          <h2 className="text-4xl text-[#2c3e50] mt-4 mb-16 heading-font font-medium">Comodidades Destacadas</h2>
+          <h2 className="text-4xl text-[#2c3e50] mt-4 mb-16 heading-font font-medium">{content.featuresTitle}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
             <div className="bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group">
               <div className="w-14 h-14 bg-[#f9f9f9] rounded-2xl flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Wifi className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">Conectividad Total</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">{content.feature1Title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">
-                Fibra óptica de alta velocidad 1Gbps en toda la propiedad, ideal para disfrutar o teletrabajar sin interrupciones.
+                {content.feature1Desc}
               </p>
             </div>
 
@@ -147,9 +150,9 @@ export default async function Home() {
               <div className="w-14 h-14 bg-[#f9f9f9] rounded-2xl flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-300">
                 <ChefHat className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">Cocina Gourmet</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">{content.feature2Title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">
-                Totalmente equipada con electrodomésticos de última generación, isla central y vinoteca. Perfecta para amantes de la gastronomía.
+                {content.feature2Desc}
               </p>
             </div>
 
@@ -157,9 +160,9 @@ export default async function Home() {
               <div className="w-14 h-14 bg-[#f9f9f9] rounded-2xl flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-300">
                 <CarFront className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">Aparcamiento</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">{content.feature3Title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">
-                Garaje privado para dos vehículos y zona exterior de aparcamiento. Incluye cargador para vehículos eléctricos.
+                {content.feature3Desc}
               </p>
             </div>
           </div>
@@ -177,10 +180,10 @@ export default async function Home() {
       <section className="py-20 bg-[#2c3e50] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
         <div className="max-w-4xl mx-auto px-4 relative z-10 text-center text-white">
-          <h2 className="text-4xl md:text-5xl font-medium heading-font mb-6">Reserva tu estancia de ensueño hoy mismo</h2>
-          <p className="text-xl text-gray-300 font-light mb-10">Las fechas se llenan rápidamente. Asegura tu paraíso particular ahora.</p>
+          <h2 className="text-4xl md:text-5xl font-medium heading-font mb-6">{content.ctaTitle}</h2>
+          <p className="text-xl text-gray-300 font-light mb-10">{content.ctaDesc}</p>
           <Link href="/book" className="inline-block bg-[#d4af37] hover:bg-white hover:text-[#2c3e50] text-white px-10 py-4 rounded-sm transition-all duration-300 text-sm uppercase tracking-widest font-bold shadow-2xl">
-            Consultar el Calendario
+            {content.ctaButton}
           </Link>
         </div>
       </section>

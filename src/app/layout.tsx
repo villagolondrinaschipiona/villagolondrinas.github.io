@@ -34,6 +34,7 @@ export default async function RootLayout({
           contactEmail={content?.contactEmail}
           contactPhone={content?.contactPhone}
           contactAddress={content?.contactAddress}
+          footerIntro={content?.footerIntro}
         />
       </body>
     </html>

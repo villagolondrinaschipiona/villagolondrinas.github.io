@@ -34,6 +34,20 @@ model SiteContent {
   contactEmail    String   @default("villagolondrinaschipiona@gmail.com")
   contactPhone    String   @default("+34 600 000 000")
   contactAddress  String   @default("Chipiona, Cádiz, España")
+
+  featuresTitle   String   @default("Comodidades Destacadas")
+  feature1Title   String   @default("Conectividad Total")
+  feature1Desc    String   @default("Fibra óptica de alta velocidad 1Gbps en toda la propiedad, ideal para disfrutar o teletrabajar sin interrupciones.")
+  feature2Title   String   @default("Cocina Gourmet")
+  feature2Desc    String   @default("Totalmente equipada con electrodomésticos de última generación, isla central y vinoteca. Perfecta para amantes de la gastronomía.")
+  feature3Title   String   @default("Aparcamiento")
+  feature3Desc    String   @default("Garaje privado para dos vehículos y zona exterior de aparcamiento. Incluye cargador para vehículos eléctricos.")
+
+  ctaTitle        String   @default("Reserva tu estancia de ensueño hoy mismo")
+  ctaDesc         String   @default("Las fechas se llenan rápidamente. Asegura tu paraíso particular ahora.")
+  ctaButton       String   @default("Consultar el Calendario")
+
+  footerIntro     String   @default("Tu destino premium para vacaciones inolvidables. Diseño, confort y tranquilidad absoluta en un entorno privilegiado.")
   
   // JSON fields for arrays
   galleryImages   Json     @default("[]") // Array of { url: string, title: string }
