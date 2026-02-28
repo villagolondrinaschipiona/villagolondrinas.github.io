@@ -46,7 +46,7 @@ export default function AdminLogin() {
                         <Lock className="w-8 h-8 text-[#d4af37]" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">Acceso Administrador</h2>
-                    <p className="text-gray-500 text-sm mt-2">Panel de control de Villa Serenity</p>
+                    <p className="text-gray-500 text-sm mt-2">Panel de control de Villa Golondrinas</p>
                 </div>
 
                 {error && (

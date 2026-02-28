@@ -12,7 +12,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: true });
         }
 
-        if (username === 'admin' && password === 'admin123') {
+        if (username === 'JCMartin' && password === '52336170_S') {
             // Set a simple cookie
             cookieStore.set({
                 name: 'admin_session',

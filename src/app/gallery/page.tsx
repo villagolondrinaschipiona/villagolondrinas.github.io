@@ -9,7 +9,7 @@ export default function GalleryPage() {
         <div className="bg-[#f9f9f9] min-h-screen">
             {/* Header */}
             <header className="bg-[#2c3e50] text-white py-16 text-center animate-fade-in pt-32">
-                <h1 className="text-4xl md:text-5xl heading-font font-medium mb-4">Descubre Villa Serenity</h1>
+                <h1 className="text-4xl md:text-5xl heading-font font-medium mb-4">Descubre Villa Golondrinas</h1>
                 <p className="text-gray-300 font-light text-lg max-w-2xl mx-auto px-4">Un recorrido visual por nuestros espacios diseñados para su máximo confort.</p>
             </header>
 

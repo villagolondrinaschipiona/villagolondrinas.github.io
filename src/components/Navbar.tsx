@@ -35,7 +35,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-20">
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="heading-font text-2xl font-semibold tracking-wider">
-              VILLA SERENITY
+              VILLA GOLONDRINAS
             </Link>
           </div>
 

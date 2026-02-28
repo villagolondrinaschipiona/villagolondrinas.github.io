@@ -22,7 +22,7 @@ model Booking {
 
 model SiteContent {
   id              String   @id @default("main") // Singleton record
-  heroTitle       String   @default("Villa Serenity")
+  heroTitle       String   @default("Villa Golondrinas")
   heroTagline     String   @default("Escapada Exclusiva")
   heroDescription String   @default("Donde el lujo encuentra la paz")
   heroImage       String   @default("https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80")
@@ -30,6 +30,10 @@ model SiteContent {
   aboutIntro      String   @default("Un refugio premium...")
   aboutDetails    String   @default("Detalles extendidos...")
   aboutImage      String   @default("https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80")
+  
+  contactEmail    String   @default("villagolondrinaschipiona@gmail.com")
+  contactPhone    String   @default("+34 600 000 000")
+  contactAddress  String   @default("Chipiona, Cádiz, España")
   
   // JSON fields for arrays
   galleryImages   Json     @default("[]") // Array of { url: string, title: string }
