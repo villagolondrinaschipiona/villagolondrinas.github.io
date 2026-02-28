@@ -1,12 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getContent } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { ChevronDown, Users, BedDouble, Bath, Waves, Wifi, ChefHat, CarFront, ArrowRight } from "lucide-react";
 import GallerySlideshow from "@/components/GallerySlideshow";
 
-// Server Component
-export default function Home() {
-  const content = getContent();
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const content = await prisma.siteContent.findUnique({
+    where: { id: 'main' }
+  }) || {
+    heroTagline: '', heroTitle: '', heroDescription: '', heroImage: '',
+    aboutTitle: '', aboutIntro: '', aboutDetails: '', aboutImage: '',
+    galleryImages: [], blockedDates: []
+  };
 
   return (
     <div className="home-page">
@@ -57,12 +64,11 @@ export default function Home() {
       <section id="about" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="relative">
+            <div className="relative p-2 bg-white border-4 border-[#d4af37] rounded-xl shadow-2xl">
               <GallerySlideshow
                 images={content.galleryImages as any || []}
                 fallbackImage={content.aboutImage}
               />
-              <div className="absolute -bottom-6 -right-6 w-full h-full border-2 border-[#d4af37] rounded-lg z-0 hidden lg:block"></div>
             </div>
 
             <div className="px-4 lg:px-8">

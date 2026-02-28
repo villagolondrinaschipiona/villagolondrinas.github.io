@@ -290,6 +290,60 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </section>
+                {/* Features Section (Static Preview) */}
+                <section className="py-24 bg-[#f9f9f9]">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative pointer-events-none">
+                    <span className="text-[#d4af37] tracking-widest text-sm uppercase font-semibold">Servicios Excepcionales</span>
+                    <h2 className="text-4xl text-[#2c3e50] mt-4 mb-16 heading-font font-medium">Comodidades Destacadas (Textos Fijos)</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left opacity-70">
+                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100"><h3 className="text-xl font-semibold mb-3">Conectividad Total</h3><p className="text-gray-600 font-light">Fibra óptica de alta velocidad 1Gbps...</p></div>
+                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100"><h3 className="text-xl font-semibold mb-3">Cocina Gourmet</h3><p className="text-gray-600 font-light">Totalmente equipada con electrodomésticos...</p></div>
+                      <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100"><h3 className="text-xl font-semibold mb-3">Aparcamiento</h3><p className="text-gray-600 font-light">Garaje privado para dos vehículos...</p></div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* CTA Section (Static Preview) */}
+                <section className="py-20 bg-[#2c3e50] relative overflow-hidden pointer-events-none">
+                  <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                  <div className="max-w-4xl mx-auto px-4 relative z-10 text-center text-white">
+                    <h2 className="text-4xl md:text-5xl font-medium heading-font mb-6">Reserva tu estancia de ensueño hoy mismo</h2>
+                    <div className="inline-block bg-[#d4af37] text-white px-10 py-4 rounded-sm text-sm uppercase font-bold shadow-2xl">Consultar el Calendario</div>
+                  </div>
+                </section>
+
+                {/* Footer (Editable Contact Info) */}
+                <footer className="bg-white pt-16 pb-8 border-t border-gray-100">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+                      <div className="opacity-70 pointer-events-none">
+                        <span className="heading-font text-2xl font-semibold tracking-wider text-[#2c3e50]">VILLA GOLONDRINAS</span>
+                        <p className="mt-4 text-gray-500 font-light leading-relaxed max-w-xs">Tu destino premium para vacaciones inolvidables.</p>
+                      </div>
+                      <div className="opacity-70 pointer-events-none">
+                        <h4 className="font-semibold text-gray-900 mb-4 uppercase text-sm">Enlaces Rápidos</h4>
+                        <ul className="space-y-3 font-light text-gray-500"><li>Inicio</li><li>Galería / Casa</li><li>Reservas</li></ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-4 uppercase text-sm">Contacto (Datos Editables)</h4>
+                        <ul className="space-y-3 font-light text-gray-500 flex flex-col">
+                          <li className="flex items-center gap-3 w-full">
+                            <span className="text-[#d4af37]">🗺️</span>
+                            <input className="dark-text-input w-full text-sm" value={content.contactAddress} onChange={e => setContent({ ...content, contactAddress: e.target.value })} placeholder="Dirección física" />
+                          </li>
+                          <li className="flex items-center gap-3 w-full">
+                            <span className="text-[#d4af37]">📞</span>
+                            <input className="dark-text-input w-full text-sm" value={content.contactPhone} onChange={e => setContent({ ...content, contactPhone: e.target.value })} placeholder="Teléfono" />
+                          </li>
+                          <li className="flex items-center gap-3 w-full">
+                            <span className="text-[#d4af37]">✉️</span>
+                            <input className="dark-text-input w-full text-sm" value={content.contactEmail} onChange={e => setContent({ ...content, contactEmail: e.target.value })} placeholder="Email público" />
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </footer>
               </div>
 
             </div>

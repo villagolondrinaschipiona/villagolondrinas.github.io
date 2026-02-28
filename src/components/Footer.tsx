@@ -35,7 +35,7 @@ export default function Footer({ contactEmail, contactPhone, contactAddress }: F
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone className="w-4 h-4 text-[#d4af37]" />
-                                {contactPhone || '+34 600 000 000'}
+                                {contactPhone || '+34 615 31 71 37'}
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail className="w-4 h-4 text-[#d4af37]" />
@@ -47,13 +47,9 @@ export default function Footer({ contactEmail, contactPhone, contactAddress }: F
                 <div className="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
                     <p>&copy; {new Date().getFullYear()} Villa Golondrinas. Todos los derechos reservados.</p>
                     <div className="flex space-x-4 mt-4 md:mt-0 items-center">
-                        <Link href="/admin/login" className="text-gray-500 hover:text-[#d4af37] transition text-xs opacity-50 hover:opacity-100 flex items-center pr-4 border-r border-gray-200">
+                        <Link href="/admin/login" className="text-gray-500 hover:text-[#d4af37] transition text-xs opacity-50 hover:opacity-100 flex items-center pr-4">
                             Admin
                         </Link>
-                        <a href="#" className="hover:text-[#d4af37] transition"><Instagram className="w-5 h-5" /></a>
-                        <a href="#" className="hover:text-[#d4af37] transition"><Facebook className="w-5 h-5" /></a>
-                        {/* Hidden admin link */}
-                        <Link href="/admin/login" className="opacity-10 hover:opacity-100 ml-4 transition">Admin</Link>
                     </div>
                 </div>
             </div>
