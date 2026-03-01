@@ -17,6 +17,7 @@ model Booking {
   checkIn   String   // Storing as YYYY-MM-DD string for simplicity matching existing logic
   checkOut  String
   status    String   @default("PENDING") // PENDING, ACCEPTED, CANCELLED
+  estimatedPrice Float? // New dynamic pricing field
   createdAt DateTime @default(now())
 }
 
@@ -53,5 +54,10 @@ model SiteContent {
   galleryImages   Json     @default("[]") // Array of { url: string, title: string }
   blockedDates    Json     @default("[]") // Array of string dates (YYYY-MM-DD)
   
+  // Pricing Fields
+  defaultPrice    Float    @default(150.0)
+  seasonalPrices  Json     @default("[]") // Array of { name: string, startDate: string, endDate: string, price: number }
+  pricingDisclaimer String @default("Precio estimado. El anfitrión confirmará el precio final.")
+
   updatedAt       DateTime @updatedAt
 }

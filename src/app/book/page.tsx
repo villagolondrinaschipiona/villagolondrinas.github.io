@@ -20,17 +20,31 @@ export default function BookPage() {
     const [success, setSuccess] = useState(false);
     const [formError, setFormError] = useState('');
 
-    // Fetch blocked dates
+    const [defaultPrice, setDefaultPrice] = useState<number>(0);
+    const [seasonalPrices, setSeasonalPrices] = useState<any[]>([]);
+    const [pricingDisclaimer, setPricingDisclaimer] = useState('');
+    const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
+
+    // Fetch blocked dates and pricing configuration
     useEffect(() => {
-        fetch('/api/blocked-dates')
-            .then(res => res.json())
-            .then((dates: string[]) => {
-                // Convert strings to Date objects
-                setBlockedDates(dates.map(d => new Date(d + 'T00:00:00')));
+        Promise.all([
+            fetch('/api/blocked-dates').then(res => res.json()),
+            fetch('/api/content').then(res => res.json())
+        ])
+            .then(([dates, contentRes]) => {
+                // Blocked dates
+                setBlockedDates(dates.map((d: string) => new Date(d + 'T00:00:00')));
+
+                // Pricing Config
+                if (contentRes) {
+                    setDefaultPrice(contentRes.defaultPrice || 150);
+                    setSeasonalPrices(contentRes.seasonalPrices || []);
+                    setPricingDisclaimer(contentRes.pricingDisclaimer || 'Precio estimado. El anfitrión confirmará el precio final.');
+                }
             })
             .catch(err => {
-                console.error("Failed to load dates", err);
-                setFetchError('Error al cargar disponibilidad.');
+                console.error("Failed to load availability and pricing", err);
+                setFetchError('Error al cargar disponibilidad y precios.');
             });
     }, []);
 
@@ -52,6 +66,38 @@ export default function BookPage() {
         }
         return false;
     };
+
+    // Calculate Estimated Price
+    useEffect(() => {
+        if (!range?.from || !range?.to) {
+            setEstimatedPrice(0);
+            return;
+        }
+
+        let total = 0;
+        let curr = new Date(range.from);
+        const to = new Date(range.to);
+
+        // Calculate up to the night BEFORE checkout
+        while (curr < to) {
+            let nightlyPrice = defaultPrice;
+            const dateStr = curr.toISOString().split('T')[0];
+
+            // Specific seasonal exception?
+            for (let season of seasonalPrices) {
+                if (dateStr >= season.startDate && dateStr <= season.endDate) {
+                    nightlyPrice = season.price;
+                    // Stop looking if we found a matching season (first match wins)
+                    break;
+                }
+            }
+
+            total += nightlyPrice;
+            curr.setDate(curr.getDate() + 1);
+        }
+
+        setEstimatedPrice(total);
+    }, [range, defaultPrice, seasonalPrices]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,7 +125,8 @@ export default function BookPage() {
                     guests: parseInt(guests),
                     message,
                     checkIn: range.from.toISOString().split('T')[0],
-                    checkOut: range.to.toISOString().split('T')[0]
+                    checkOut: range.to.toISOString().split('T')[0],
+                    estimatedPrice: estimatedPrice
                 }),
             });
 
@@ -182,6 +229,19 @@ export default function BookPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Price Estimation */}
+                                {estimatedPrice > 0 && (
+                                    <div className="bg-[#fefce8] border border-[#d4af37]/30 rounded-lg p-5 mb-6 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-gray-700 font-medium">Precio Estimado Total:</span>
+                                            <span className="text-2xl font-bold text-[#2c3e50]">{estimatedPrice} €</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 italic mt-2 text-justify">
+                                            * {pricingDisclaimer}
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>

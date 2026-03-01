@@ -137,6 +137,30 @@ export default function AdminDashboard() {
     });
   };
 
+  // --- Pricing Management ---
+  const [newSeason, setNewSeason] = useState({ name: '', startDate: '', endDate: '', price: '' });
+
+  const addSeasonalPrice = () => {
+    if (!newSeason.name || !newSeason.startDate || !newSeason.endDate || !newSeason.price) return;
+    const priceNum = parseFloat(newSeason.price);
+    if (isNaN(priceNum)) return;
+
+    setContent({
+      ...content,
+      seasonalPrices: [
+        ...(content.seasonalPrices || []),
+        { ...newSeason, price: priceNum }
+      ]
+    });
+    setNewSeason({ name: '', startDate: '', endDate: '', price: '' });
+  };
+
+  const removeSeasonalPrice = (index: number) => {
+    const updated = [...(content.seasonalPrices || [])];
+    updated.splice(index, 1);
+    setContent({ ...content, seasonalPrices: updated });
+  };
+
   // --- Image Processing & Upload Logic ---
   const processImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -591,6 +615,58 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Pricing Management */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2 text-[#2c3e50]">Gestión de Precios</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio Base por Noche (€)</label>
+                  <input type="number" step="0.01" className="border px-4 py-2 rounded-md w-full focus:ring-[#2c3e50] outline-none" value={content.defaultPrice || ''} onChange={e => setContent({ ...content, defaultPrice: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Aviso Legal (Calculadora Estimada)</label>
+                  <textarea className="border px-4 py-2 rounded-md w-full focus:ring-[#2c3e50] outline-none text-sm h-10 resize-y" value={content.pricingDisclaimer || ''} onChange={e => setContent({ ...content, pricingDisclaimer: e.target.value })} />
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Temporadas Especiales</h4>
+                <p className="text-xs text-gray-500 mb-4">Añade rangos de fechas con precios diferentes al base. Si una fecha cae en una temporada, usará este precio.</p>
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                  <input type="text" placeholder="Nombre (ej. Verano Alto)" className="border px-3 py-2 rounded-md focus:ring-[#2c3e50] outline-none text-sm flex-1" value={newSeason.name} onChange={e => setNewSeason({ ...newSeason, name: e.target.value })} />
+                  <input type="date" className="border px-3 py-2 rounded-md focus:ring-[#2c3e50] outline-none text-sm" value={newSeason.startDate} onChange={e => setNewSeason({ ...newSeason, startDate: e.target.value })} title="Inicio" />
+                  <input type="date" className="border px-3 py-2 rounded-md focus:ring-[#2c3e50] outline-none text-sm" value={newSeason.endDate} onChange={e => setNewSeason({ ...newSeason, endDate: e.target.value })} title="Fin" />
+                  <input type="number" placeholder="Precio/Noche €" className="border px-3 py-2 rounded-md focus:ring-[#2c3e50] outline-none text-sm w-32" value={newSeason.price} onChange={e => setNewSeason({ ...newSeason, price: e.target.value })} />
+                  <button onClick={addSeasonalPrice} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-200 transition text-sm whitespace-nowrap">Añadir</button>
+                </div>
+
+                <div className="space-y-2">
+                  {(content.seasonalPrices || []).map((season: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-100 text-sm">
+                      <div>
+                        <span className="font-semibold text-gray-800 mr-2">{season.name}</span>
+                        <span className="text-gray-500">{season.startDate} al {season.endDate}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-medium text-[#2c3e50]">{season.price} € / noche</span>
+                        <button onClick={() => removeSeasonalPrice(idx)} className="text-gray-400 hover:text-red-500 transition"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                  ))}
+                  {(!content.seasonalPrices || content.seasonalPrices.length === 0) && (
+                    <div className="text-center text-gray-400 text-sm py-4 italic border border-dashed rounded bg-gray-50">No hay temporadas configuradas.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button onClick={handleSaveContent} disabled={saving} className="bg-[#2c3e50] text-white px-6 py-2 rounded-md hover:bg-gray-800 transition flex items-center gap-2 text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Guardar Precios
+                </button>
+              </div>
+            </div>
+
             {/* Bookings Table */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6 border-b border-gray-100 bg-gray-50">
@@ -603,6 +679,7 @@ export default function AdminDashboard() {
                       <th className="p-4 font-semibold">Huésped</th>
                       <th className="p-4 font-semibold">Fechas (Llegada / Salida)</th>
                       <th className="p-4 font-semibold">Pax</th>
+                      <th className="p-4 font-semibold">Estimado</th>
                       <th className="p-4 font-semibold">Estado</th>
                       <th className="p-4 font-semibold text-right">Acciones</th>
                     </tr>
@@ -617,6 +694,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4 text-gray-600">{b.checkIn} a <br />{b.checkOut}</td>
                         <td className="p-4 text-gray-600">{b.guests}</td>
+                        <td className="p-4 font-medium text-gray-800">{b.estimatedPrice ? `${b.estimatedPrice}€` : '-'}</td>
                         <td className="p-4">
                           {b.status === 'PENDING' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Pendiente</span>}
                           {b.status === 'ACCEPTED' && <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Aceptada</span>}

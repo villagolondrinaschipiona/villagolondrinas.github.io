@@ -45,6 +45,7 @@ export async function POST(request: Request) {
                     <p><strong>Llegada:</strong> ${bookingData.checkIn}</p>
                     <p><strong>Salida:</strong> ${bookingData.checkOut}</p>
                     <p><strong>Personas:</strong> ${bookingData.guests}</p>
+                    ${bookingData.estimatedPrice ? `<p><strong>Precio Estimado:</strong> ${bookingData.estimatedPrice}€</p>` : ''}
                     <p><strong>Mensaje:</strong> ${bookingData.message || 'Sin observaciones'}</p>
                     <br>
                     <p>Accede al panel de administración para ACEPTAR o CANCELAR esta reserva.</p>
