@@ -17,8 +17,9 @@ export default function AdminDashboard() {
 
   // Email Modal States
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [selectedBookingForEmail, setSelectedBookingForEmail] = useState<{ id: string, name: string, email: string, checkIn: string, checkOut: string, status: string } | null>(null);
+  const [selectedBookingForEmail, setSelectedBookingForEmail] = useState<{ id: string, name: string, email: string, checkIn: string, checkOut: string, status: string, estimatedPrice?: number } | null>(null);
   const [customEmailMessage, setCustomEmailMessage] = useState('');
+  const [finalPrice, setFinalPrice] = useState<number>(0);
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -76,10 +77,11 @@ export default function AdminDashboard() {
 
   const openBookingActionModal = (booking: any, newStatus: string) => {
     setSelectedBookingForEmail({ ...booking, status: newStatus });
+    setFinalPrice(booking.estimatedPrice || 0);
 
     // Pre-fill email template
     const actionText = newStatus === 'ACCEPTED' ? 'aceptada' : 'denegada';
-    setCustomEmailMessage(`Estimado ${booking.name},\n\nSu reserva para los días ${booking.checkIn} al ${booking.checkOut} ha sido ${actionText}.\n\nUn saludo,\nVilla Golondrinas.`);
+    setCustomEmailMessage(`Estimado ${booking.name},\n\nSu solicitud de reserva para los días ${booking.checkIn} al ${booking.checkOut} ha sido ${actionText}.\n\nEl precio final confirmado para esta estancia es de: ${booking.estimatedPrice || 0} €.\n\nPor favor, contacte con nosotros para procesar el pago y finalizar la confirmación.\n\nUn saludo,\nVilla Golondrinas.`);
 
     setEmailModalOpen(true);
   };
@@ -93,7 +95,8 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: selectedBookingForEmail.status,
-          customEmailMessage: customEmailMessage
+          customEmailMessage: customEmailMessage,
+          finalPrice: finalPrice
         })
       });
       if (res.ok) {
@@ -119,22 +122,47 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAddBlockedDate = () => {
+  const handleAddBlockedDate = async () => {
     if (!newBlockedDate) return;
     const current = content.blockedDates || [];
     if (!current.includes(newBlockedDate)) {
-      setContent({ ...content, blockedDates: [...current, newBlockedDate].sort() });
+      const updatedDates = [...current, newBlockedDate].sort();
+      const updatedContent = { ...content, blockedDates: updatedDates };
+      setContent(updatedContent);
       setNewBlockedDate('');
+
+      // Auto-save when modifying dates
+      setSaving(true);
+      try {
+        await fetch('/api/content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedContent)
+        });
+      } finally {
+        setSaving(false);
+      }
     } else {
       alert('Fecha ya bloqueada');
     }
   };
 
-  const removeBlockedDate = (date: string) => {
-    setContent({
-      ...content,
-      blockedDates: (content.blockedDates || []).filter((d: string) => d !== date)
-    });
+  const removeBlockedDate = async (date: string) => {
+    const updatedDates = (content.blockedDates || []).filter((d: string) => d !== date);
+    const updatedContent = { ...content, blockedDates: updatedDates };
+    setContent(updatedContent);
+
+    // Auto-save when modifying dates
+    setSaving(true);
+    try {
+      await fetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedContent)
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // --- Pricing Management ---
@@ -593,8 +621,9 @@ export default function AdminDashboard() {
                   onChange={e => setNewBlockedDate(e.target.value)}
                 />
                 <button
-                  onClick={() => { handleAddBlockedDate(); handleSaveContent({ preventDefault: () => { } } as any); }}
+                  onClick={handleAddBlockedDate}
                   className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition"
+                  disabled={saving}
                 >
                   Bloquear Fecha
                 </button>
@@ -604,7 +633,7 @@ export default function AdminDashboard() {
                 {(content.blockedDates || []).map((date: string) => (
                   <div key={date} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-sm flex items-center gap-2 border">
                     {date}
-                    <button onClick={() => { removeBlockedDate(date); handleSaveContent({ preventDefault: () => { } } as any); }} className="text-gray-400 hover:text-red-500 transition">
+                    <button onClick={() => removeBlockedDate(date)} disabled={saving} className="text-gray-400 hover:text-red-500 transition disabled:opacity-50">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -740,8 +769,29 @@ export default function AdminDashboard() {
             </div>
             <div className="p-6">
               <p className="text-sm text-gray-500 mb-4">
-                Se enviará el siguiente correo electrónico a <strong>{selectedBookingForEmail.email}</strong>. Puedes editar el texto antes de enviarlo:
+                Se enviará el siguiente correo electrónico a <strong>{selectedBookingForEmail.email}</strong>.
               </p>
+
+              {selectedBookingForEmail.status === 'ACCEPTED' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio Final a Comunicar (€)</label>
+                  <input
+                    type="number" step="0.01"
+                    className="border px-4 py-2 rounded-md w-1/3 focus:ring-[#2c3e50] outline-none"
+                    value={finalPrice}
+                    onChange={e => {
+                      const newPrice = parseFloat(e.target.value) || 0;
+                      setFinalPrice(newPrice);
+                      // Update the template if the user hasn't explicitly overwritten it all
+                      const regex = /El precio final confirmado para esta estancia es de: [0-9.]+ €/g;
+                      setCustomEmailMessage(prev => prev.replace(regex, `El precio final confirmado para esta estancia es de: ${newPrice} €`));
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">El valor original calculado era de {selectedBookingForEmail.estimatedPrice || 0}€</p>
+                </div>
+              )}
+
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje de Correo Editable:</label>
               <textarea
                 className="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-[#2c3e50] focus:border-[#2c3e50] outline-none min-h-[200px]"
                 value={customEmailMessage}

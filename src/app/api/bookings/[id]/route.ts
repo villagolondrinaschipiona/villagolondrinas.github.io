@@ -11,9 +11,15 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             return NextResponse.json({ error: 'Status is required' }, { status: 400 });
         }
 
+        const updateData: any = { status: body.status };
+        if (body.finalPrice !== undefined) {
+            // Overwrite the original estimated price so the admin dashboard shows the final amount agreed upon.
+            updateData.estimatedPrice = body.finalPrice;
+        }
+
         const updated = await prisma.booking.update({
             where: { id },
-            data: { status: body.status }
+            data: updateData
         });
 
         // Send custom email if provided
