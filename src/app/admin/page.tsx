@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Image as ImageIcon, Calendar, LogOut, Check, X, Trash2, Loader2, Save } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Calendar, LogOut, Check, X, Trash2, Loader2, Save, FileText, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'content' | 'images' | 'bookings'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'images' | 'bookings' | 'reports'>('content');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -21,6 +23,11 @@ export default function AdminDashboard() {
   const [customEmailMessage, setCustomEmailMessage] = useState('');
   const [finalPrice, setFinalPrice] = useState<number>(0);
 
+  // Report States
+  const [reportStartDate, setReportStartDate] = useState('');
+  const [reportEndDate, setReportEndDate] = useState('');
+  const [reportStatus, setReportStatus] = useState<'ALL' | 'ACCEPTED' | 'CANCELLED'>('ALL');
+  
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
@@ -230,6 +237,67 @@ export default function AdminDashboard() {
     });
   };
 
+  const currentFilteredBookingsForReport = () => {
+    return bookings.filter(b => {
+      // Status Filter
+      if (reportStatus !== 'ALL' && b.status !== reportStatus) return false;
+      
+      // Date Filter
+      if (reportStartDate && b.checkIn < reportStartDate) return false;
+      if (reportEndDate && b.checkIn > reportEndDate) return false;
+
+      return true;
+    }).sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+  };
+
+  const handleGeneratePdf = () => {
+    const doc = new jsPDF();
+    const filtered = currentFilteredBookingsForReport();
+
+    // Title
+    doc.setFontSize(20);
+    doc.text("Resumen de Reservas - Villa Golondrinas", 14, 22);
+    
+    // Subtitle / Filters
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const filterText = `Desde: ${reportStartDate || 'Inicio'} | Hasta: ${reportEndDate || 'Fin'} | Estado: ${reportStatus === 'ALL' ? 'Todos' : reportStatus === 'ACCEPTED' ? 'Aceptadas' : 'Canceladas'}`;
+    doc.text(filterText, 14, 30);
+
+    // Calculate Total
+    const totalRevenue = filtered.reduce((sum, b) => sum + (b.estimatedPrice || 0), 0);
+
+    // Table Data
+    const tableColumn = ["Huesped", "Email", "Llegada", "Salida", "Pax", "Estado", "Precio"];
+    const tableRows = filtered.map(b => [
+        b.name,
+        b.email,
+        b.checkIn,
+        b.checkOut,
+        b.guests,
+        b.status === 'ACCEPTED' ? 'Aceptada' : b.status === 'CANCELLED' ? 'Cancelada' : 'Pendiente',
+        `${b.estimatedPrice || 0} €`
+    ]);
+
+    // Draw Table
+    autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 35,
+        theme: 'striped',
+        headStyles: { fillColor: [44, 62, 80] },
+    });
+
+    // Total Footer
+    const finalY = (doc as any).lastAutoTable.finalY || 40;
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text(`Total Ingresos Calculados: ${totalRevenue.toFixed(2)} €`, 14, finalY + 10);
+
+    // Save
+    doc.save("informe_reservas.pdf");
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -325,6 +393,12 @@ export default function AdminDashboard() {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-md transition text-left ${activeTab === 'bookings' ? 'bg-[#2c3e50] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <Calendar className="w-5 h-5" /> Reservas y Calendario
+          </button>
+          <button
+            onClick={() => setActiveTab('reports')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-md transition text-left ${activeTab === 'reports' ? 'bg-[#2c3e50] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            <FileText className="w-5 h-5" /> Reportes (PDF)
           </button>
         </nav>
 
@@ -754,6 +828,50 @@ export default function AdminDashboard() {
             </div>
 
           </div>
+        )}
+
+        {/* TAB: REPORTS */}
+        {activeTab === 'reports' && (
+           <div className="animate-fade-in space-y-8">
+               <h2 className="text-2xl font-bold text-gray-900 border-b pb-4">Reportes de Reservas</h2>
+               
+               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">Configurar Filtros de Exportación</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio (Check-in)</label>
+                           <input type="date" className="border px-4 py-2 rounded-md w-full outline-none focus:ring-[#2c3e50]" value={reportStartDate} onChange={e => setReportStartDate(e.target.value)} />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Fin (Check-in)</label>
+                           <input type="date" className="border px-4 py-2 rounded-md w-full outline-none focus:ring-[#2c3e50]" value={reportEndDate} onChange={e => setReportEndDate(e.target.value)} />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Estado de la Reserva</label>
+                           <select className="border px-4 py-2 rounded-md w-full outline-none focus:ring-[#2c3e50] bg-white" value={reportStatus} onChange={e => setReportStatus(e.target.value as any)}>
+                               <option value="ALL">Todas</option>
+                               <option value="ACCEPTED">Aceptadas</option>
+                               <option value="CANCELLED">Canceladas</option>
+                           </select>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div>
+                            <p className="font-semibold text-gray-800">Resultados Encontrados: {currentFilteredBookingsForReport().length}</p>
+                            <p className="text-sm text-gray-500">Suma total estimada: {currentFilteredBookingsForReport().reduce((sum, b) => sum + (b.estimatedPrice || 0), 0).toFixed(2)} €</p>
+                        </div>
+                        <button 
+                            onClick={handleGeneratePdf} 
+                            disabled={currentFilteredBookingsForReport().length === 0}
+                            className="bg-[#2c3e50] text-white px-6 py-2.5 rounded-md hover:bg-gray-800 transition flex items-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                             <Download className="w-5 h-5" /> Descargar PDF
+                        </button>
+                    </div>
+               </div>
+           </div>
         )}
       </main>
 

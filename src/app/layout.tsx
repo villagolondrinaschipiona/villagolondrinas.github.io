@@ -18,7 +18,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const content = await prisma.siteContent.findUnique({ where: { id: 'main' } });
+  let content = null;
+  try {
+    content = await prisma.siteContent.findUnique({ where: { id: 'main' } });
+  } catch (error) {
+    console.warn("Could not fetch site content during layout render, DB might be down/paused.");
+  }
 
   // Fix: Move the template literal class construction out or format it without escaping backticks
   const bodyClasses = `${outfit.variable} ${playfair.variable} font-sans antialiased flex flex-col min-h-screen bg-[#f9f9f9]`;
