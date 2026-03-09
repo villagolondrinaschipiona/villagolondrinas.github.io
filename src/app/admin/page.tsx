@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LayoutDashboard, Image as ImageIcon, Calendar, LogOut, Check, X, Trash2, Loader2, Save, FileText, Download } from 'lucide-react';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'content' | 'images' | 'bookings' | 'reports'>('content');
@@ -69,14 +67,19 @@ export default function AdminDashboard() {
     e.preventDefault();
     setSaving(true);
     try {
-      await fetch('/api/content', {
+      const res = await fetch('/api/content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(content)
       });
-      alert('Cambios guardados correctamente.');
+      if (res.ok) {
+        alert('Cambios guardados correctamente.');
+      } else {
+        const err = await res.json();
+        alert(`Error al guardar: ${err.error || 'Demasiadas imágenes. Intenta reducir el tamaño.'}`);
+      }
     } catch {
-      alert('Error al guardar.');
+      alert('Error de red al guardar. Puede que las imágenes sean demasiado grandes.');
     } finally {
       setSaving(false);
     }
@@ -224,7 +227,8 @@ export default function AdminDashboard() {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', 0.8)); // Compress gently
+            // Compress aggressively to prevent Vercel 4.5MB payload limit errors
+            resolve(canvas.toDataURL('image/jpeg', 0.6)); 
           } else {
             reject('Could not get canvas context');
           }
@@ -250,52 +254,60 @@ export default function AdminDashboard() {
     }).sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
   };
 
-  const handleGeneratePdf = () => {
-    const doc = new jsPDF();
-    const filtered = currentFilteredBookingsForReport();
+  const handleGeneratePdf = async () => {
+    try {
+        const jspdfModule = await import('jspdf');
+        const autoTableModule = (await import('jspdf-autotable')).default;
+        
+        const doc = new jspdfModule.jsPDF();
+        const filtered = currentFilteredBookingsForReport();
 
-    // Title
-    doc.setFontSize(20);
-    doc.text("Resumen de Reservas - Villa Golondrinas", 14, 22);
-    
-    // Subtitle / Filters
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    const filterText = `Desde: ${reportStartDate || 'Inicio'} | Hasta: ${reportEndDate || 'Fin'} | Estado: ${reportStatus === 'ALL' ? 'Todos' : reportStatus === 'ACCEPTED' ? 'Aceptadas' : 'Canceladas'}`;
-    doc.text(filterText, 14, 30);
+        // Title
+        doc.setFontSize(20);
+        doc.text("Resumen de Reservas - Villa Golondrinas", 14, 22);
+        
+        // Subtitle / Filters
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        const filterText = `Desde: ${reportStartDate || 'Inicio'} | Hasta: ${reportEndDate || 'Fin'} | Estado: ${reportStatus === 'ALL' ? 'Todos' : reportStatus === 'ACCEPTED' ? 'Aceptadas' : 'Canceladas'}`;
+        doc.text(filterText, 14, 30);
 
-    // Calculate Total
-    const totalRevenue = filtered.reduce((sum, b) => sum + (b.estimatedPrice || 0), 0);
+        // Calculate Total
+        const totalRevenue = filtered.reduce((sum, b) => sum + (b.estimatedPrice || 0), 0);
 
-    // Table Data
-    const tableColumn = ["Huesped", "Email", "Llegada", "Salida", "Pax", "Estado", "Precio"];
-    const tableRows = filtered.map(b => [
-        b.name,
-        b.email,
-        b.checkIn,
-        b.checkOut,
-        b.guests,
-        b.status === 'ACCEPTED' ? 'Aceptada' : b.status === 'CANCELLED' ? 'Cancelada' : 'Pendiente',
-        `${b.estimatedPrice || 0} €`
-    ]);
+        // Table Data
+        const tableColumn = ["Huesped", "Email", "Llegada", "Salida", "Pax", "Estado", "Precio"];
+        const tableRows = filtered.map(b => [
+            b.name,
+            b.email,
+            b.checkIn,
+            b.checkOut,
+            b.guests,
+            b.status === 'ACCEPTED' ? 'Aceptada' : b.status === 'CANCELLED' ? 'Cancelada' : 'Pendiente',
+            `${b.estimatedPrice || 0} €`
+        ]);
 
-    // Draw Table
-    autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: 35,
-        theme: 'striped',
-        headStyles: { fillColor: [44, 62, 80] },
-    });
+        // Draw Table
+        autoTableModule(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 35,
+            theme: 'striped',
+            headStyles: { fillColor: [44, 62, 80] },
+        });
 
-    // Total Footer
-    const finalY = (doc as any).lastAutoTable.finalY || 40;
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    doc.text(`Total Ingresos Calculados: ${totalRevenue.toFixed(2)} €`, 14, finalY + 10);
+        // Total Footer
+        const finalY = (doc as any).lastAutoTable.finalY || 40;
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(`Total Ingresos Calculados: ${totalRevenue.toFixed(2)} €`, 14, finalY + 10);
 
-    // Save
-    doc.save("informe_reservas.pdf");
+        // Save
+        doc.save("informe_reservas.pdf");
+    } catch (error) {
+        console.error("Failed to load PDF library:", error);
+        alert("Error al generar el PDF. Por favor, inténtelo de nuevo.");
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
