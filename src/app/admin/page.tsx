@@ -36,8 +36,14 @@ export default function AdminDashboard() {
   const fetchContent = async () => {
     setLoading(true);
     try {
-      const contentRes = await fetch('/api/content');
-      setContent(await contentRes.json());
+      const contentRes = await fetch('/api/content?t=' + Date.now(), { cache: 'no-store' });
+      if (contentRes.ok) {
+          const data = await contentRes.json();
+          setContent(data);
+      } else {
+          console.error("Server error reading content.");
+          setContent({});
+      }
     } catch (e) {
       console.error("Failed to load content data");
     } finally {
@@ -48,10 +54,17 @@ export default function AdminDashboard() {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const bookingsRes = await fetch('/api/bookings');
-      setBookings(await bookingsRes.json());
+      const bookingsRes = await fetch('/api/bookings?t=' + Date.now(), { cache: 'no-store' });
+      if (bookingsRes.ok) {
+          const data = await bookingsRes.json();
+          setBookings(Array.isArray(data) ? data : []);
+      } else {
+          console.error("Server error reading bookings.");
+          setBookings([]);
+      }
     } catch (e) {
       console.error("Failed to load bookings data");
+      setBookings([]);
     } finally {
       setLoading(false);
     }
