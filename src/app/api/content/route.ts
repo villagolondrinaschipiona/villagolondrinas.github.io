@@ -37,6 +37,12 @@ export async function POST(request: Request) {
         if (updateData.blockedDates) {
             updateData.blockedDates = updateData.blockedDates as Prisma.InputJsonValue;
         }
+        if (updateData.seasonalPrices) {
+            updateData.seasonalPrices = updateData.seasonalPrices as Prisma.InputJsonValue;
+        }
+
+        delete updateData.id;
+        delete updateData.updatedAt;
 
         const updated = await prisma.siteContent.upsert({
             where: { id: 'main' },
@@ -45,8 +51,8 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json(updated);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error saving content:', error);
-        return NextResponse.json({ error: 'Failed to save content' }, { status: 500 });
+        return NextResponse.json({ error: error?.message || 'Failed to save content' }, { status: 500 });
     }
 }
