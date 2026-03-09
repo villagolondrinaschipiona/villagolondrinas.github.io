@@ -7,11 +7,18 @@ import GallerySlideshow from "@/components/GallerySlideshow";
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const content = await prisma.siteContent.findUnique({
-    where: { id: 'main' }
-  }) || {
-    heroTagline: '', heroTitle: '', heroDescription: '', heroImage: '',
-    aboutTitle: '', aboutIntro: '', aboutDetails: '', aboutImage: '',
+  let dbContent = null;
+  try {
+    dbContent = await prisma.siteContent.findUnique({
+      where: { id: 'main' }
+    });
+  } catch (error) {
+    console.warn('Failed to fetch content on home page (DB might be sleeping):', error);
+  }
+
+  const content = dbContent || {
+    heroTagline: '', heroTitle: 'Villa Golondrinas', heroDescription: 'Escapada exclusiva. La base de datos se está despertando, actualice en unos segundos si faltan imágenes.', heroImage: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80',
+    aboutTitle: 'Nuestra Casa', aboutIntro: '', aboutDetails: '', aboutImage: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80',
     featuresTitle: 'Comodidades Destacadas', feature1Title: 'Conectividad Total', feature1Desc: 'Fibra óptica de alta velocidad para que siempre estés conectado, ideal para teletrabajo o entretenimiento.',
     feature2Title: 'Cocina Gourmet', feature2Desc: 'Cocina totalmente equipada con electrodomésticos de última generación y utensilios de alta calidad para tus creaciones culinarias.', feature3Title: 'Aparcamiento', feature3Desc: 'Garaje privado con capacidad para varios vehículos, ofreciendo seguridad y comodidad durante toda tu estancia.',
     ctaTitle: 'Reserva tu estancia de ensueño hoy mismo', ctaDesc: 'Las fechas se llenan rápidamente, asegura tu lugar en el paraíso. ¡No te quedes sin tu experiencia inolvidable!', ctaButton: 'Consultar el Calendario',
