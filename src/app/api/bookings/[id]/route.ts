@@ -17,10 +17,26 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             updateData.estimatedPrice = body.finalPrice;
         }
 
-        const updated = await prisma.booking.update({
-            where: { id },
-            data: updateData
-        });
+        let updated;
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                updated = await prisma.booking.update({
+                    where: { id },
+                    data: updateData
+                });
+                break;
+            } catch (err: any) {
+                retries--;
+                if (retries === 0) throw err;
+                console.warn(`Prisma update failed, retrying in ${4 - retries}s...`, err.message);
+                await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+            }
+        }
+
+        if (!updated) {
+            throw new Error('Failed to update booking');
+        }
 
         // Send custom email if provided
         if (body.customEmailMessage && updated.email) {
@@ -56,9 +72,20 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     try {
         const { id } = await context.params;
 
-        await prisma.booking.delete({
-            where: { id }
-        });
+        let deleteRetries = 3;
+        while (deleteRetries > 0) {
+            try {
+                await prisma.booking.delete({
+                    where: { id }
+                });
+                break;
+            } catch (err: any) {
+                deleteRetries--;
+                if (deleteRetries === 0) throw err;
+                console.warn(`Prisma delete failed, retrying in ${4 - deleteRetries}s...`, err.message);
+                await new Promise(resolve => setTimeout(resolve, (4 - deleteRetries) * 1000));
+            }
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {

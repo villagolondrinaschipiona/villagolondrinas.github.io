@@ -19,10 +19,22 @@ export async function POST(request: Request) {
     try {
         const bookingData = await request.json();
 
-        // 1. Save to database
-        const newBooking = await prisma.booking.create({
-            data: bookingData
-        });
+        // 1. Save to database with retry (handling Supabase cold starts)
+        let newBooking;
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                newBooking = await prisma.booking.create({
+                    data: bookingData
+                });
+                break;
+            } catch (err: any) {
+                retries--;
+                if (retries === 0) throw err;
+                console.warn(`Prisma create failed, retrying in ${4 - retries}s...`, err.message);
+                await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+            }
+        }
 
         // 2. Send Email Notification
         try {

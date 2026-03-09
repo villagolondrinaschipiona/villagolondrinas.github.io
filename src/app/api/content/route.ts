@@ -44,11 +44,23 @@ export async function POST(request: Request) {
         delete updateData.id;
         delete updateData.updatedAt;
 
-        const updated = await prisma.siteContent.upsert({
-            where: { id: 'main' },
-            update: updateData,
-            create: { id: 'main', ...updateData }
-        });
+        let updated;
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                updated = await prisma.siteContent.upsert({
+                    where: { id: 'main' },
+                    update: updateData,
+                    create: { id: 'main', ...updateData }
+                });
+                break; // Success
+            } catch (err: any) {
+                retries--;
+                if (retries === 0) throw err;
+                console.warn(`Prisma upsert failed, retrying in ${4 - retries}s...`, err.message);
+                await new Promise(resolve => setTimeout(resolve, (4 - retries) * 1000));
+            }
+        }
 
         return NextResponse.json(updated);
     } catch (error: any) {
