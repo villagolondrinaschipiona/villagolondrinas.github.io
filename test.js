@@ -1,0 +1,1 @@
+const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { try { const data = await prisma.siteContent.findUnique({where: {id: 'main'}}); console.log('SUCCESS'); } catch(e) { console.error('ERROR:', e.message); } finally { await prisma.(); } } main();  
