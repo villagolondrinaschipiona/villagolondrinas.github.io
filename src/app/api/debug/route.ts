@@ -1,0 +1,1 @@
+import { NextResponse } from 'next/server'; export const dynamic = 'force-dynamic'; export async function GET() { return NextResponse.json({ db: process.env.DATABASE_URL?.split('@')[1], dir: process.env.DIRECT_URL?.split('@')[1] }); } 
