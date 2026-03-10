@@ -4,9 +4,7 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 let connectionUrl = process.env.DATABASE_URL;
 
-// Auto-upgrade legacy Supabase PgBouncer URLs to the new Supavisor format.
-// Legacy Vercel ENVs used: postgresql://postgres:password@db.[ref].supabase.co:6543
-// Supavisor requires: postgresql://postgres.[ref]:password@aws-0-region.pooler.supabase.com:6543
+// Auto-upgrade legacy Supabase PgBouncer URLs to the new Supavisor format if they exist.
 if (connectionUrl && connectionUrl.includes('supabase.co')) {
     const pwdMatch = connectionUrl.match(/postgres:(.*?)@db\./);
     if (pwdMatch && pwdMatch[1]) {
