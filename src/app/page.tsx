@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ChevronDown, Users, BedDouble, Bath, Waves, Wifi, ChefHat, CarFront, ArrowRight } from "lucide-react";
+import { ChevronDown, Users, BedDouble, Bath, Waves, Goal, Flame, CarFront, ArrowRight } from "lucide-react";
 import GallerySlideshow from "@/components/GallerySlideshow";
 
 export const dynamic = 'force-dynamic';
@@ -145,7 +145,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
             <div className="bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group">
               <div className="w-14 h-14 bg-[#f9f9f9] rounded-2xl flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-300">
-                <Wifi className="w-6 h-6" />
+                <Waves className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">{content.feature1Title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">
@@ -155,7 +155,7 @@ export default async function Home() {
 
             <div className="bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group">
               <div className="w-14 h-14 bg-[#f9f9f9] rounded-2xl flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-300">
-                <ChefHat className="w-6 h-6" />
+                <Goal className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">{content.feature2Title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">
@@ -165,7 +165,7 @@ export default async function Home() {
 
             <div className="bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-100 group">
               <div className="w-14 h-14 bg-[#f9f9f9] rounded-2xl flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-300">
-                <CarFront className="w-6 h-6" />
+                <Flame className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3 heading-font">{content.feature3Title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">
