@@ -53,10 +53,10 @@ export default async function Home() {
             {content.heroDescription}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/book" className="bg-[#d4af37] hover:bg-[#c5a028] text-white px-8 py-4 rounded-sm transition text-sm uppercase tracking-widest font-medium shadow-lg hover:-translate-y-0.5 transform duration-200">
+            <Link href="/book" className="bg-[#d4af37]/90 hover:bg-[#d4af37] backdrop-blur-sm border border-[#d4af37]/40 text-white px-8 py-4 rounded-sm transition text-sm uppercase tracking-widest font-medium shadow-xl hover:-translate-y-0.5 transform duration-200">
               Comprobar Disponibilidad
             </Link>
-            <Link href="/gallery" className="glass text-white hover:bg-white hover:text-gray-900 px-8 py-4 rounded-sm transition text-sm uppercase tracking-widest font-medium">
+            <Link href="/gallery" className="bg-[#e6c766]/90 hover:bg-[#e6c766] backdrop-blur-sm border border-[#d4af37]/30 text-white px-8 py-4 rounded-sm transition text-sm uppercase tracking-widest font-medium shadow-xl hover:-translate-y-0.5 transform duration-200">
               Ver Galería
             </Link>
           </div>
