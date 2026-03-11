@@ -14,6 +14,13 @@ export default function AdminDashboard() {
   const [content, setContent] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([]);
   const [newBlockedDate, setNewBlockedDate] = useState('');
+  const [acceptMessage, setAcceptMessage] = useState(
+    `Estimado ${booking.name},\n\nSu solicitud de reserva para los días desde el ${booking.checkIn} al ${booking.checkOut} ha sido aceptada.\n\nEl precio final confirmado para esta estancia es de: ${booking.estimatedPrice || 0} €.\n\nPor favor, contacte con nosotros vía WhatsApp al 615 31 71 37 para procesar el pago y finalizar la confirmación.\n\nUn saludo,\nVilla Golondrinas.`
+  );
+
+  const [rejectMessage, setRejectMessage] = useState(
+    `Estimado ${booking.name},\n\nSu solicitud de reserva para los días desde el ${booking.checkIn} al ${booking.checkOut} no ha podido ser aceptada para esas fechas.\n\ Puede consultar otras fechas disponibles en nuestra web.\ n\nUn saludo,\nVilla Golondrinas.`
+  );
 
   // Email Modal States
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -72,7 +79,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     await fetch('/api/auth', { method: 'DELETE' });
-    router.push('/admin/login');
+    router.push('/');
     router.refresh();
   };
 
@@ -103,9 +110,11 @@ export default function AdminDashboard() {
     setFinalPrice(booking.estimatedPrice || 0);
 
     // Pre-fill email template
-    const actionText = newStatus === 'ACCEPTED' ? 'aceptada' : 'denegada';
-    setCustomEmailMessage(`Estimado ${booking.name},\n\nSu solicitud de reserva para los días ${booking.checkIn} al ${booking.checkOut} ha sido ${actionText}.\n\nEl precio final confirmado para esta estancia es de: ${booking.estimatedPrice || 0} €.\n\nPor favor, contacte con nosotros para procesar el pago y finalizar la confirmación.\n\nUn saludo,\nVilla Golondrinas.`);
-
+    if (newStatus === 'ACCEPTED') {
+      setCustomEmailMessage(acceptMessage);
+    } else {
+      setCustomEmailMessage(rejectMessage);
+    }
     setEmailModalOpen(true);
   };
 
@@ -795,6 +804,41 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Messages Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">
+          Mensajes automáticos de respuesta
+          </h3>
+
+            <div className="space-y-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mensaje cuando se acepta una solicitud
+                </label>
+                  <textarea
+                  value={acceptMessage}
+                  onChange={(e)=>setAcceptMessage(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md p-3 text-sm"
+                  rows={4}
+                  />
+                </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mensaje cuando se rechaza una solicitud
+                </label>
+                  <textarea
+                  value={rejectMessage}
+                  onChange={(e)=>setRejectMessage(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md p-3 text-sm"
+                  rows={4}
+                  />
+                </div>
+
+              </div>
+            </div>
+            
             {/* Bookings Table */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6 border-b border-gray-100 bg-gray-50">
