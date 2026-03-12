@@ -12,82 +12,22 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             return NextResponse.json({ error: 'Status is required' }, { status: 400 });
         }
 
+        // Preparar datos de actualización
         const updateData: any = { status: body.status };
         if (body.finalPrice !== undefined) {
-            // Overwrite the original estimated price so the admin dashboard shows the final amount agreed upon.
             updateData.estimatedPrice = body.finalPrice;
         }
 
-        let updated: Booking | null = null;
+        // Intentar actualizar con reintentos
+        let updatedBooking: Booking | null = null;
         let retries = 3;
         while (retries > 0) {
             try {
-                const booking = await prisma.booking.update({
-  where: { id },
-  data: { status }
-});;
-
-if (status === "ACCEPTED") {
-
-  const siteContent = await prisma.siteContent.findUnique({
-      where: { id: "main" }
-    });
-
-  const start = new Date(booking.checkIn);
-  const end = new Date(booking.checkOut);
-
-  let current = new Date(start);
-  const newDates: string[] = [];
-
-  while (current <= end) {
-
-    newDates.push(current.toISOString().split("T")[0]);
-
-    current.setDate(current.getDate() + 1);
-  }
-
-  await prisma.siteContent.update({
-  where: { id: "main" },
-  data: {
-    blockedDates: [
-      ...((siteContent?.blockedDates as string[]) || []),
-      ...newDates
-    ]
-  }
-});
-
-}
-if (status === "CANCELLED") {
-
-  const siteContent = await prisma.siteContent.findUnique({
-    where: { id: "main" }
-  });
-
-  const start = new Date(booking.checkIn);
-  const end = new Date(booking.checkOut);
-
-  let current = new Date(start);
-  let datesToRemove: string[] = [];
-
-  while (current <= end) {
-
-    datesToRemove.push(current.toISOString().split("T")[0]);
-
-    current.setDate(current.getDate() + 1);
-  }
-
-  const remainingDates = ((siteContent?.blockedDates as string[]) || [])
-    .filter(d => !datesToRemove.includes(d));
-
-  await prisma.siteContent.update({
-    where: { id: "main" },
-    data: {
-      blockedDates: remainingDates
-    }
-  });
-
-}                
-                break;
+                updatedBooking = await prisma.booking.update({
+                    where: { id },
+                    data: updateData
+                });
+                break; // éxito, salir del bucle
             } catch (err: any) {
                 retries--;
                 if (retries === 0) throw err;
@@ -96,12 +36,66 @@ if (status === "CANCELLED") {
             }
         }
 
-        if (!updated) {
+        if (!updatedBooking) {
             throw new Error('Failed to update booking');
         }
 
-        // Send custom email if provided
-        if (body.customEmailMessage && booking.email) {
+        // Ahora, según el nuevo estado, actualizar las fechas bloqueadas
+        const status = body.status; // alias para claridad
+
+        if (status === "ACCEPTED") {
+            // Obtener el contenido del sitio
+            const siteContent = await prisma.siteContent.findUnique({
+                where: { id: "main" }
+            });
+
+            // Generar rango de fechas
+            const start = new Date(updatedBooking.checkIn);
+            const end = new Date(updatedBooking.checkOut);
+            const newDates: string[] = [];
+            let current = new Date(start);
+            while (current <= end) {
+                newDates.push(current.toISOString().split("T")[0]);
+                current.setDate(current.getDate() + 1);
+            }
+
+            // Actualizar blockedDates
+            await prisma.siteContent.update({
+                where: { id: "main" },
+                data: {
+                    blockedDates: [
+                        ...((siteContent?.blockedDates as string[]) || []),
+                        ...newDates
+                    ]
+                }
+            });
+        } else if (status === "CANCELLED") {
+            const siteContent = await prisma.siteContent.findUnique({
+                where: { id: "main" }
+            });
+
+            const start = new Date(updatedBooking.checkIn);
+            const end = new Date(updatedBooking.checkOut);
+            const datesToRemove: string[] = [];
+            let current = new Date(start);
+            while (current <= end) {
+                datesToRemove.push(current.toISOString().split("T")[0]);
+                current.setDate(current.getDate() + 1);
+            }
+
+            const remainingDates = ((siteContent?.blockedDates as string[]) || [])
+                .filter(d => !datesToRemove.includes(d));
+
+            await prisma.siteContent.update({
+                where: { id: "main" },
+                data: {
+                    blockedDates: remainingDates
+                }
+            });
+        }
+
+        // Enviar email si se proporciona mensaje personalizado
+        if (body.customEmailMessage && updatedBooking.email) {
             try {
                 const transporter = nodemailer.createTransport({
                     service: 'gmail',
@@ -113,7 +107,7 @@ if (status === "CANCELLED") {
 
                 const mailOptions = {
                     from: process.env.EMAIL_USER,
-                    to: booking.email,
+                    to: updatedBooking.email,
                     subject: `Actualización de Reserva - Villa Golondrinas`,
                     text: body.customEmailMessage
                 };
@@ -124,8 +118,9 @@ if (status === "CANCELLED") {
             }
         }
 
-        return NextResponse.json(updated);
+        return NextResponse.json(updatedBooking);
     } catch (error) {
+        console.error('PUT error:', error);
         return NextResponse.json({ error: 'Failed to update booking status' }, { status: 500 });
     }
 }
