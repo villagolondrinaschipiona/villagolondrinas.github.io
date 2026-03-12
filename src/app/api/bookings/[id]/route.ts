@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import nodemailer from 'nodemailer';
+import { Booking } from "@prisma/client";
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
     try {
@@ -17,7 +18,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
             updateData.estimatedPrice = body.finalPrice;
         }
 
-        let updated;
+        let updated: Booking | null = null;
         let retries = 3;
         while (retries > 0) {
             try {
@@ -100,7 +101,7 @@ if (status === "CANCELLED") {
         }
 
         // Send custom email if provided
-        if (body.customEmailMessage && updated.email) {
+        if (body.customEmailMessage && updated?.email) {
             try {
                 const transporter = nodemailer.createTransport({
                     service: 'gmail',
