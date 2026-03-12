@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { ChevronDown, Users, BedDouble, Bath, Waves, Goal, Flame, CarFront, ArrowRight } from "lucide-react";
+import { ChevronDown, Users, BedDouble, Bath, Waves, Goal, Flame, CarFront, ArrowRight, Wifi, Car } from "lucide-react";
 import GallerySlideshow from "@/components/GallerySlideshow";
 
 export const dynamic = 'force-dynamic';
@@ -105,7 +105,7 @@ export default async function Home() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-[#d4af37]/10 flex items-center justify-center text-[#d4af37]">
-                    <BedDouble />
+                    <Wifi />
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900">WIFI</h4>
@@ -114,7 +114,7 @@ export default async function Home() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-[#d4af37]/10 flex items-center justify-center text-[#d4af37]">
-                    <Bath />
+                    <Car />
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900">Aparcamiento</h4>
