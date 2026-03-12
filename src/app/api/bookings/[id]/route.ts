@@ -45,12 +45,15 @@ if (status === "ACCEPTED") {
     current.setDate(current.getDate() + 1);
   }
 
-  await prisma.settings.update({
-    where: { id: settings!.id },
-    data: {
-      blockedDates: [...(settings?.blockedDates as string[]), ...newDates]
-    }
-  });
+  await prisma.siteContent.update({
+  where: { id: "main" },
+  data: {
+    blockedDates: [
+      ...((siteContent?.blockedDates as string[]) || []),
+      ...newDates
+    ]
+  }
+});
 
 }
 if (status === "CANCELLED") {
