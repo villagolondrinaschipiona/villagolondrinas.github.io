@@ -15,11 +15,11 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [newBlockedDate, setNewBlockedDate] = useState('');
   const [acceptMessage, setAcceptMessage] = useState(
-    `Estimado ${booking.name},\n\nSu solicitud de reserva para los días desde el ${booking.checkIn} al ${booking.checkOut} ha sido aceptada.\n\nEl precio final confirmado para esta estancia es de: ${booking.estimatedPrice || 0} €.\n\nPor favor, contacte con nosotros vía WhatsApp al 615 31 71 37 para procesar el pago y finalizar la confirmación.\n\nUn saludo,\nVilla Golondrinas.`
+    `Estimado {nombreUsuario},\n\nSu solicitud de reserva para los días desde el {fechaInicio} al {fechaFin} ha sido aceptada.\n\nEl precio final confirmado para esta estancia es de: {precioEstancia} €.\n\nPor favor, contacte con nosotros vía WhatsApp al 615 31 71 37 para procesar el pago y finalizar la confirmación.\n\nUn saludo,\nVilla Golondrinas.`
   );
 
   const [rejectMessage, setRejectMessage] = useState(
-    `Estimado ${booking.name},\n\nSu solicitud de reserva para los días desde el ${booking.checkIn} al ${booking.checkOut} no ha podido ser aceptada para esas fechas.\n\ Puede consultar otras fechas disponibles en nuestra web.\ n\nUn saludo,\nVilla Golondrinas.`
+    `Estimado {nombreUsuario},\n\nSu solicitud de reserva para los días desde el {fechaInicio} al {fechaFin} no ha podido ser aceptada para esas fechas.\n\nPuede consultar otras fechas disponibles en nuestra web.\n\nUn saludo,\nVilla Golondrinas.`
   );
 
   // Email Modal States
@@ -111,9 +111,18 @@ export default function AdminDashboard() {
 
     // Pre-fill email template
     if (newStatus === 'ACCEPTED') {
-      setCustomEmailMessage(acceptMessage);
+      setCustomEmailMessage(acceptMessage
+                            .replace('{nombreUsuario}', booking.name)
+                            .replace('{fechaInicio}', booking.checkIn)
+                            .replace('{fechaFin}', booking.checkOut)
+                            .replace('{precioEstancia}', booking.estimatedPrice || 0)
+                           );
     } else {
-      setCustomEmailMessage(rejectMessage);
+      setCustomEmailMessage(rejectMessage
+                            .replace('{nombreUsuario}', booking.name)
+                            .replace('{fechaInicio}', booking.checkIn)
+                            .replace('{fechaFin}', booking.checkOut)
+                           );
     }
     setEmailModalOpen(true);
   };
