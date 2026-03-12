@@ -25,7 +25,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
                 const booking = await prisma.booking.update({
   where: { id },
   data: { status }
-});
+});;
 
 if (status === "ACCEPTED") {
 
@@ -101,7 +101,7 @@ if (status === "CANCELLED") {
         }
 
         // Send custom email if provided
-        if (body.customEmailMessage && updated?.email) {
+        if (body.customEmailMessage && booking.email) {
             try {
                 const transporter = nodemailer.createTransport({
                     service: 'gmail',
@@ -113,7 +113,7 @@ if (status === "CANCELLED") {
 
                 const mailOptions = {
                     from: process.env.EMAIL_USER,
-                    to: updated.email,
+                    to: booking.email,
                     subject: `Actualización de Reserva - Villa Golondrinas`,
                     text: body.customEmailMessage
                 };
