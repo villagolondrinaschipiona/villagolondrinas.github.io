@@ -100,7 +100,7 @@ export default async function Home() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900">Capacidad</h4>
-                    <p className="text-sm text-gray-500">Hasta 8 personas</p>
+                    <p className="text-sm text-gray-500">Hasta 5 personas</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -108,8 +108,8 @@ export default async function Home() {
                     <BedDouble />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Habitaciones</h4>
-                    <p className="text-sm text-gray-500">4 Suites dobles</p>
+                    <h4 className="font-semibold text-gray-900">WIFI</h4>
+                    <p className="text-sm text-gray-500">Conexión a internet incluida</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -117,8 +117,8 @@ export default async function Home() {
                     <Bath />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Baños</h4>
-                    <p className="text-sm text-gray-500">5 Baños completos</p>
+                    <h4 className="font-semibold text-gray-900">Aparcamiento</h4>
+                    <p className="text-sm text-gray-500">Gratuito, en el interior de las instalaciones</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default async function Home() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900">Piscina</h4>
-                    <p className="text-sm text-gray-500">Privada y climatizada</p>
+                    <p className="text-sm text-gray-500">Privada, con chillout</p>
                   </div>
                 </div>
               </div>
