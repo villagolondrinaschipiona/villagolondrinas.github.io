@@ -21,10 +21,29 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         let retries = 3;
         while (retries > 0) {
             try {
-                updated = await prisma.booking.update({
-                    where: { id },
-                    data: updateData
-                });
+                updated = const booking = await prisma.booking.update({
+  where: { id },
+  data: { status }
+});
+
+if (status === "ACCEPTED") {
+
+  const start = new Date(booking.checkIn);
+  const end = new Date(booking.checkOut);
+
+  let current = new Date(start);
+
+  while (current <= end) {
+    await prisma.blockedDate.create({
+      data: {
+        date: new Date(current)
+      }
+    });
+
+    current.setDate(current.getDate() + 1);
+  }
+
+}
                 break;
             } catch (err: any) {
                 retries--;
