@@ -34,7 +34,7 @@ if (status === "ACCEPTED") {
   let current = new Date(start);
 
   while (current <= end) {
-    await prisma.blockedDate.create({
+    await prisma.blockedDates.create({
       data: {
         date: new Date(current)
       }
@@ -44,6 +44,25 @@ if (status === "ACCEPTED") {
   }
 
 }
+if (status === "REJECTED") {
+
+  const start = new Date(booking.checkIn);
+  const end = new Date(booking.checkOut);
+
+  let current = new Date(start);
+
+  while (current <= end) {
+
+    await prisma.blockedDates.deleteMany({
+      where: {
+        date: new Date(current)
+      }
+    });
+
+    current.setDate(current.getDate() + 1);
+  }
+
+}                
                 break;
             } catch (err: any) {
                 retries--;
