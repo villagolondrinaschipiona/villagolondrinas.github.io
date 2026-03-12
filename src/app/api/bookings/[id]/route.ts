@@ -21,7 +21,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         let retries = 3;
         while (retries > 0) {
             try {
-                updated = const booking = await prisma.booking.update({
+                const booking = await prisma.booking.update({
   where: { id },
   data: { status }
 });
