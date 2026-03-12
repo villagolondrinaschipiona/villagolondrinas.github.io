@@ -28,39 +28,55 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
 if (status === "ACCEPTED") {
 
+  const settings = await prisma.settings.findFirst();
+
   const start = new Date(booking.checkIn);
   const end = new Date(booking.checkOut);
 
   let current = new Date(start);
+  const newDates: string[] = [];
 
   while (current <= end) {
-    await prisma.blockedDates.create({
-      data: {
-        date: new Date(current)
-      }
-    });
+
+    newDates.push(current.toISOString().split("T")[0]);
 
     current.setDate(current.getDate() + 1);
   }
+
+  await prisma.settings.update({
+    where: { id: settings!.id },
+    data: {
+      blockedDates: [...(settings?.blockedDates as string[]), ...newDates]
+    }
+  });
 
 }
 if (status === "REJECTED") {
 
+  const settings = await prisma.settings.findFirst();
+
   const start = new Date(booking.checkIn);
   const end = new Date(booking.checkOut);
 
   let current = new Date(start);
+  let datesToRemove: string[] = [];
 
   while (current <= end) {
 
-    await prisma.blockedDates.deleteMany({
-      where: {
-        date: new Date(current)
-      }
-    });
+    datesToRemove.push(current.toISOString().split("T")[0]);
 
     current.setDate(current.getDate() + 1);
   }
+
+  const remainingDates = (settings?.blockedDates as string[])
+    .filter(d => !datesToRemove.includes(d));
+
+  await prisma.settings.update({
+    where: { id: settings!.id },
+    data: {
+      blockedDates: remainingDates
+    }
+  });
 
 }                
                 break;
