@@ -28,7 +28,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
 if (status === "ACCEPTED") {
 
-  const settings = await prisma.settings.findFirst();
+  const siteContent = await prisma.siteContent.findUnique({
+      where: { id: "main" }
+    });
 
   const start = new Date(booking.checkIn);
   const end = new Date(booking.checkOut);
@@ -51,9 +53,11 @@ if (status === "ACCEPTED") {
   });
 
 }
-if (status === "REJECTED") {
+if (status === "CANCELLED") {
 
-  const settings = await prisma.settings.findFirst();
+  const siteContent = await prisma.siteContent.findUnique({
+    where: { id: "main" }
+  });
 
   const start = new Date(booking.checkIn);
   const end = new Date(booking.checkOut);
@@ -68,11 +72,11 @@ if (status === "REJECTED") {
     current.setDate(current.getDate() + 1);
   }
 
-  const remainingDates = (settings?.blockedDates as string[])
+  const remainingDates = ((siteContent?.blockedDates as string[]) || [])
     .filter(d => !datesToRemove.includes(d));
 
-  await prisma.settings.update({
-    where: { id: settings!.id },
+  await prisma.siteContent.update({
+    where: { id: "main" },
     data: {
       blockedDates: remainingDates
     }
